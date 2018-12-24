@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>聊天界面</title>
+    <script type="text/javascript" charset="UTF-8" src="{{static_url('js/jquery-3.3.1.min.js')}}"></script>
+</head>
+<body>
+    <div id="contents" style="width: 500px;height: 500px;overflow: auto"></div>
+    <div>
+        <input type="text" id="message" />
+        <button onclick="sendMessage()">发送</button>
+    </div>
+    <button id="b1">发送</button>
+
+    <script>
+        //建立WebSocket链接，连接之后，服务器端调用open方法，客户端调用
+        var ws = new WebSocket('ws://127.0.0.1:8888/chat');
+
+        // 建立 websocket连接 成功触发事件。
+        ws.onopen = function (event) {
+            var userobj = {"msgid":1, "id":1, "content":"我爱你"};
+            // 使用 send() 方法发送数据
+            ws.send(JSON.stringify(userobj));
+        };
+
+        // 断开 websocket连接 成功触发事件
+        ws.onclose = function (event) {
+            /*不一定能发送过去*/
+            var userobj = {"msgid":3,"userid":456,"devid":888};
+            ws.send(JSON.stringify(userobj));
+        };
+
+        //接收服务器消息
+        ws.onmessage = function (event) {
+            $('#contents').append("<p>"+event.data+"</p>");
+            var rs = JSON.parse(event.data);
+            if(rs["msgid"] == 1){
+                console.log("首次进来了");
+                var rs = JSON.parse(event.data);
+                $('#contents').append("<p>"+rs.content+"</p>")
+            }
+            if(rs["msgid"] == 2){
+                console.log("再次进来了");
+                $('#contents').append("<p>"+rs.content+"</p>")
+            }
+        };
+
+        //向服务器发送消息
+        function sendMessage() {
+            // console.log('*************')
+            var message = $('#message').val();
+            ws.send(message);
+            $('#message').val("")
+        }
+
+        $("#b1").click(function(){
+            var userobj = {"msgid":2, "id":1, "content":"我爱你", "to":[2,3]};
+            ws.send(JSON.stringify(userobj));
+        })
+    </script>
+</body>
+</html>
